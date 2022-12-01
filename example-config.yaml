@@ -1,0 +1,5 @@
+repos:
+  - name: repo1
+    owner: owner
+  - name: repo2
+    owner: owner
