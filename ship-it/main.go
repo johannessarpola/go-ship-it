@@ -16,19 +16,6 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-type Release struct {
-	Title string
-	Body  string
-	Tag   string
-}
-
-type Module struct {
-	Repo     string
-	Name     string
-	Org      string
-	Releases []Release
-}
-
 func useTokenAuth(token string) *http.Client {
 	ctx := context.Background()
 
@@ -104,6 +91,17 @@ func readConfig() (AppConfig, error) {
 	return appConfig, nil
 }
 
+type Release struct {
+	Title string
+	Body  string
+	Tag   string
+}
+
+type Module struct {
+	Name     string
+	Releases []Release
+}
+
 func main() {
 	ctx := context.Background()
 
@@ -135,6 +133,19 @@ func main() {
 		if err != nil {
 			fmt.Printf("Could not find repository %s\n", repo)
 		}
+
+		releases, _, _ := client.Repositories.ListReleases(ctx, repo.Owner, repo.Name, nil)
+
+		// module := Module {
+		// 	Name: fmt.Sprintf("%s/%s", repo.Owner, repo.Name)§
+
+		// }
+
+		for _, release := range releases {
+			fmt.Println(release.GetTagName())
+			fmt.Println(release.GetBody())
+		}
+
 		fmt.Println(fmt.Printf("%s:%s", remote.GetName(), remote.GetURL()))
 	}
 	fmt.Println("Hello, World!")
