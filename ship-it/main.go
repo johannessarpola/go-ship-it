@@ -58,12 +58,22 @@ func createClient() (*github.Client, error) {
 }
 
 type Repo struct {
-	Name  string `yaml:"name"`
-	Owner string `yaml:"owner"`
+	Name     string `yaml:"name"`
+	Owner    string `yaml:"owner"`
+	Workflow string `yaml:"workflow"`
 }
 
 type AppConfig struct {
-	Repos []Repo `yaml:"repos"`
+	DefaultWorkflow string `yaml:"workflow"`
+	Repos           []Repo `yaml:"repos"`
+}
+
+func resolveWorkflow(repo *Repo, app *AppConfig) string {
+	if len(repo.Workflow) == 0 {
+		return app.DefaultWorkflow
+	} else {
+		return repo.Workflow
+	}
 }
 
 func readConfig() (AppConfig, error) {
@@ -128,6 +138,7 @@ func main() {
 	}
 
 	for _, repo := range appConfig.Repos {
+
 		fmt.Println(repo)
 		remote, _, err := client.Repositories.Get(ctx, repo.Owner, repo.Name)
 		if err != nil {
