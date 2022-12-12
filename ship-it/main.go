@@ -7,8 +7,10 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 
+	"github.com/gin-gonic/gin"
 	"github.com/google/go-github/v48/github"
 	"github.com/joho/godotenv"
 	"github.com/pkg/errors"
@@ -65,6 +67,8 @@ type Repo struct {
 
 type AppConfig struct {
 	DefaultWorkflow string `yaml:"workflow"`
+	Port            string `yaml:"port"`
+	Host            string `yaml:"host"`
 	Repos           []Repo `yaml:"repos"`
 }
 
@@ -102,17 +106,59 @@ func readConfig() (AppConfig, error) {
 }
 
 type Release struct {
-	Title string
-	Body  string
-	Tag   string
+	ID   string `json:"id"`
+	Name string `json:"name"`
+	Body string `json:"body"`
+	Tag  string `json:"tag"`
 }
 
-type Module struct {
-	Name     string
-	Releases []Release
+type Repository struct {
+	Name     string    `json:"name"`
+	Releases []Release `json:"releases"`
 }
+
+func convertRelease(release *github.RepositoryRelease) Release {
+	return Release{
+		ID:   strconv.FormatInt(release.GetID(), 10),
+		Name: release.GetName(),
+		Body: release.GetBody(),
+		Tag:  release.GetTagName(),
+	}
+}
+
+func setupRouter() *gin.Engine {
+	router := gin.Default()
+	router.GET("/repositories", getRepositoryReleases)
+
+	return router
+}
+
+func getRepositoryReleases(c *gin.Context) {
+	ctx := context.Background()
+
+	var repositories []Repository
+
+	for _, repo := range appConfig.Repos {
+		releases, _, _ := githubClient.Repositories.ListReleases(ctx, repo.Owner, repo.Name, nil) // TODO Handle errors
+		var convertedReleases []Release                                                           // TODO Paginate so it is not all the releases
+		for _, release := range releases {
+			convertedReleases = append(convertedReleases, convertRelease(release))
+		}
+
+		r := Repository{
+			Name:     repo.Name,
+			Releases: convertedReleases,
+		}
+		repositories = append(repositories, r)
+	}
+	c.IndentedJSON(http.StatusOK, repositories)
+}
+
+var githubClient *github.Client
+var appConfig AppConfig
 
 func main() {
+
 	ctx := context.Background()
 
 	err := godotenv.Load()
@@ -120,44 +166,25 @@ func main() {
 		log.Print("Could not load env variables")
 	}
 
-	client, err := createClient()
+	githubClient, err = createClient()
 	if err != nil {
 		log.Fatal("Could not create Github client", err)
 	}
 
-	appConfig, err := readConfig()
+	appConfig, err = readConfig()
 
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	user, _, err := client.Users.Get(ctx, "")
+	router := setupRouter()
+	router.Run(fmt.Sprintf("%s:%s", appConfig.Host, appConfig.Port))
+
+	user, _, err := githubClient.Users.Get(ctx, "")
 	fmt.Println(user.GetName())
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	for _, repo := range appConfig.Repos {
-
-		fmt.Println(repo)
-		remote, _, err := client.Repositories.Get(ctx, repo.Owner, repo.Name)
-		if err != nil {
-			fmt.Printf("Could not find repository %s\n", repo)
-		}
-
-		releases, _, _ := client.Repositories.ListReleases(ctx, repo.Owner, repo.Name, nil)
-
-		// module := Module {
-		// 	Name: fmt.Sprintf("%s/%s", repo.Owner, repo.Name)§
-
-		// }
-
-		for _, release := range releases {
-			fmt.Println(release.GetTagName())
-			fmt.Println(release.GetBody())
-		}
-
-		fmt.Println(fmt.Printf("%s:%s", remote.GetName(), remote.GetURL()))
-	}
 	fmt.Println("Hello, World!")
 }
