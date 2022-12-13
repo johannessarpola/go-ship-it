@@ -5,4 +5,11 @@ type Release = {
     tag: string
 }
 
+const Release = (props: Release) => {
+    const abc = 123;
+    return (
+        
+    )
+}
+
 export default Release;
