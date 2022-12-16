@@ -1,5 +1,6 @@
 import styles from '../styles/Home.module.css'
 import { useState, useEffect } from 'react'
+import Repositories from '../components/repositories'
 
 export default function Home() {
   const [data, setData] = useState([])
@@ -20,21 +21,10 @@ export default function Home() {
   if (isLoading) return <p>Loading...</p>
   if (!data) return <p>No repositories found</p>
 
-  return (<>
-    <h1>Hello world! </h1>
-    <p> List: </p>
-    <ul>
-      {data.map(({ name, releases }, idx) => {
-        return (
-          <li key={idx}> {name}
-            <ul>
-              {releases != null ? releases.map( ({ id, name, body, tag }, sidx ) => {
-                return (<li key={sidx}> {id}, {name}, {body}, {tag} </li>)
-              }) : <></>}
-            </ul>
-          </li>)
-      })}
-    </ul>
-  </>
+  return (
+    <>
+      <h1>Hello world! </h1>
+      <Repositories repos={data}></Repositories>
+    </>
   )
 }
