@@ -1,14 +1,13 @@
 import Release from "./release";
 import ReleaseType from "../interfaces/release"
 
-type Props = {
+interface Props {
     releases: ReleaseType[]
 }
 
 const Releases = ({ releases }: Props) => {
-    return (
-        releases.map((release, idx) => {
-            return <Release {...release}></Release>
+    return (releases.map((release, idx) => {
+            return (<Release key={idx} {...release}></Release>)
         })
     )
 }
