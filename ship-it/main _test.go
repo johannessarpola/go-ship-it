@@ -13,8 +13,8 @@ func TestResolveWorkflow(t *testing.T) {
 	want := regexp.MustCompile(`\b` + appconf.DefaultWorkflow + `\b`)
 	want2 := regexp.MustCompile(`\b` + repo2.Workflow + `\b`)
 
-	result := resolveWorkflow(&repo, &appconf)
-	result2 := resolveWorkflow(&repo2, &appconf)
+	result := resolveWorkflow(&repo, appconf.DefaultWorkflow)
+	result2 := resolveWorkflow(&repo2, appconf.DefaultWorkflow)
 
 	if !want.MatchString(result) {
 		t.Fatalf(`Hello("Gladys") = %q, want match for %#q, nil`, result, want)

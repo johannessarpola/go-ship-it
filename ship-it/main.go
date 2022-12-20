@@ -43,6 +43,7 @@ type Release struct {
 type Repository struct {
 	Name     string    `json:"name"`
 	Releases []Release `json:"releases"`
+	Workflow string    `json:"workflow"`
 }
 
 func useTokenAuth(token string) *http.Client {
@@ -86,9 +87,9 @@ func createClient() (*github.Client, error) {
 
 }
 
-func resolveWorkflow(repo *RepoConfig, app *AppConfig) string {
+func resolveWorkflow(repo *RepoConfig, defaultWorkflow string) string {
 	if len(repo.Workflow) == 0 {
-		return app.DefaultWorkflow
+		return defaultWorkflow
 	} else {
 		return repo.Workflow
 	}
@@ -149,6 +150,7 @@ func getRepositoryReleases(c *gin.Context) {
 		r := Repository{
 			Name:     repo.Name,
 			Releases: convertedReleases,
+			Workflow: resolveWorkflow(&repo, appConfig.DefaultWorkflow),
 		}
 		repositories = append(repositories, r)
 	}
