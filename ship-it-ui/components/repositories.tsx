@@ -12,7 +12,7 @@ const Repositories = ({ repos }: Props) => {
             {
                 repos.map((repo: RepositoryType, idx: any ) => {
                     return (
-                        <Repository key={idx} name={repo.name} releases={repo.releases}></Repository>
+                        <Repository key={idx} owner={repo.owner} name={repo.name} releases={repo.releases}></Repository>
                     );
                 })
             }

@@ -52,10 +52,9 @@ type Repository struct {
 }
 
 type CreateDispatch struct {
-	Name     string `json:"name"`
-	Owner    string `json:"owner"`
-	Tag      string `json:"tag"`
-	Workflow string `json:"workflow"`
+	Name  string `json:"name"`
+	Owner string `json:"owner"`
+	Tag   string `json:"tag"`
 }
 
 func resolveWorkflow(repo *RepoConfig, defaultWorkflow string) string {
@@ -166,10 +165,12 @@ func postStartWorkflow(c *gin.Context) {
 	repoConfig := appConfig.Repos[idx]
 	workflowFilename := resolveWorkflow(&repoConfig, appConfig.DefaultWorkflow)
 
+	tagStr := fmt.Sprintf("refs/tags/%s", create.Tag)
+
 	evt := github.CreateWorkflowDispatchEventRequest{
-		Ref: create.Tag,
+		Ref: tagStr,
 	}
-	res, err := githubClient.Actions.CreateWorkflowDispatchEventByFileName(ctx, repoConfig.Owner, repoConfig.Name, workflowFilename, evt)
+	res, _ := githubClient.Actions.CreateWorkflowDispatchEventByFileName(ctx, repoConfig.Owner, repoConfig.Name, workflowFilename, evt)
 
 	c.IndentedJSON(res.StatusCode, evt)
 }
