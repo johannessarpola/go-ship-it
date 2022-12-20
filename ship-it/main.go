@@ -108,7 +108,6 @@ func readConfig() (AppConfig, error) {
 type Release struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
-	Body string `json:"body"`
 	Tag  string `json:"tag"`
 }
 
@@ -121,7 +120,6 @@ func convertRelease(release *github.RepositoryRelease) Release {
 	return Release{
 		ID:   strconv.FormatInt(release.GetID(), 10),
 		Name: release.GetName(),
-		Body: release.GetBody(),
 		Tag:  release.GetTagName(),
 	}
 }
