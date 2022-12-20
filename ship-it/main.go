@@ -9,17 +9,21 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/go-github/v48/github"
+	"github.com/jellydator/ttlcache/v3"
 	"github.com/joho/godotenv"
 	"github.com/pkg/errors"
+	"golang.org/x/exp/slices"
 	"golang.org/x/oauth2"
 	"gopkg.in/yaml.v3"
 )
 
 var githubClient *github.Client
 var appConfig AppConfig
+var cache *ttlcache.Cache[string, Repository]
 
 type RepoConfig struct {
 	Name     string `yaml:"name"`
@@ -42,8 +46,24 @@ type Release struct {
 
 type Repository struct {
 	Name     string    `json:"name"`
+	Owner    string    `json:"owner"`
 	Releases []Release `json:"releases"`
 	Workflow string    `json:"workflow"`
+}
+
+type CreateDispatch struct {
+	Name     string `json:"name"`
+	Owner    string `json:"owner"`
+	Tag      string `json:"tag"`
+	Workflow string `json:"workflow"`
+}
+
+func resolveWorkflow(repo *RepoConfig, defaultWorkflow string) string {
+	if len(repo.Workflow) == 0 {
+		return defaultWorkflow
+	} else {
+		return repo.Workflow
+	}
 }
 
 func useTokenAuth(token string) *http.Client {
@@ -87,14 +107,6 @@ func createClient() (*github.Client, error) {
 
 }
 
-func resolveWorkflow(repo *RepoConfig, defaultWorkflow string) string {
-	if len(repo.Workflow) == 0 {
-		return defaultWorkflow
-	} else {
-		return repo.Workflow
-	}
-}
-
 func readConfig() (AppConfig, error) {
 
 	var appConfig AppConfig
@@ -131,45 +143,75 @@ func convertRelease(release *github.RepositoryRelease) Release {
 func setupRouter() *gin.Engine {
 	router := gin.Default()
 	router.GET("/repositories", getRepositoryReleases)
-
+	router.POST("/ship-it", postStartWorkflow)
 	return router
+}
+
+func postStartWorkflow(c *gin.Context) {
+	ctx := context.Background()
+	var create CreateDispatch
+
+	githubClient, err := createClient()
+	if err != nil {
+		log.Fatal("Could not create Github client", err)
+	}
+
+	if err := c.BindJSON(&create); err != nil {
+		return
+	}
+	idx := slices.IndexFunc(appConfig.Repos, func(r RepoConfig) bool {
+		return r.Name == create.Name && r.Owner == create.Owner
+	})
+
+	repoConfig := appConfig.Repos[idx]
+	workflowFilename := resolveWorkflow(&repoConfig, appConfig.DefaultWorkflow)
+
+	evt := github.CreateWorkflowDispatchEventRequest{
+		Ref: create.Tag,
+	}
+	res, err := githubClient.Actions.CreateWorkflowDispatchEventByFileName(ctx, repoConfig.Owner, repoConfig.Name, workflowFilename, evt)
+
+	c.IndentedJSON(res.StatusCode, evt)
 }
 
 func getRepositoryReleases(c *gin.Context) {
 	ctx := context.Background()
+	githubClient, err := createClient()
+	if err != nil {
+		log.Fatal("Could not create Github client", err)
+	}
 
 	var repositories []Repository
 
 	for _, repo := range appConfig.Repos {
 		releases, _, _ := githubClient.Repositories.ListReleases(ctx, repo.Owner, repo.Name, nil) // TODO Handle errors
 		var convertedReleases []Release                                                           // TODO Paginate so it is not all the releases
+
 		for _, release := range releases {
 			convertedReleases = append(convertedReleases, convertRelease(release))
 		}
-
 		r := Repository{
+			Owner:    repo.Owner,
 			Name:     repo.Name,
 			Releases: convertedReleases,
 			Workflow: resolveWorkflow(&repo, appConfig.DefaultWorkflow),
 		}
 		repositories = append(repositories, r)
+
 	}
 	c.IndentedJSON(http.StatusOK, repositories)
 }
 
 func main() {
-
-	ctx := context.Background()
-
 	err := godotenv.Load()
 	if err != nil {
 		log.Print("Could not load env variables")
 	}
 
-	githubClient, err = createClient()
-	if err != nil {
-		log.Fatal("Could not create Github client", err)
-	}
+	cache = ttlcache.New[string, Repository](
+		ttlcache.WithTTL[string, Repository](15 * time.Minute),
+	)
+	go cache.Start() // starts automatic expired item deletion
 
 	appConfig, err = readConfig()
 
@@ -179,12 +221,6 @@ func main() {
 
 	router := setupRouter()
 	router.Run(fmt.Sprintf("%s:%s", appConfig.Host, appConfig.Port))
-
-	user, _, err := githubClient.Users.Get(ctx, "")
-	fmt.Println(user.GetName())
-	if err != nil {
-		log.Fatal(err)
-	}
 
 	fmt.Println("Hello, World!")
 }

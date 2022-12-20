@@ -5,8 +5,10 @@ go 1.19
 require (
 	github.com/gin-gonic/gin v1.8.1
 	github.com/google/go-github/v48 v48.1.0
+	github.com/jellydator/ttlcache/v3 v3.0.0
 	github.com/joho/godotenv v1.4.0
 	github.com/pkg/errors v0.9.1
+	golang.org/x/exp v0.0.0-20221217163422-3c43f8badb15
 	golang.org/x/oauth2 v0.0.0-20180821212333-d2e6202438be
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -28,7 +30,8 @@ require (
 	github.com/ugorji/go/codec v1.2.7 // indirect
 	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5 // indirect
 	golang.org/x/net v0.0.0-20210226172049-e18ecbb05110 // indirect
-	golang.org/x/sys v0.0.0-20210806184541-e5e7981a1069 // indirect
+	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
+	golang.org/x/sys v0.1.0 // indirect
 	golang.org/x/text v0.3.6 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/protobuf v1.28.0 // indirect
