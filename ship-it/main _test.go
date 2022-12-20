@@ -6,9 +6,9 @@ import (
 )
 
 func TestResolveWorkflow(t *testing.T) {
-	repo := Repo{Name: "name", Owner: "owner", Workflow: ""}
-	repo2 := Repo{Name: "name", Owner: "owner", Workflow: "OverrideWorkflow"}
-	appconf := AppConfig{Repos: []Repo{repo, repo2}, DefaultWorkflow: "DefaultWorkflow"}
+	repo := RepoConfig{Name: "name", Owner: "owner", Workflow: ""}
+	repo2 := RepoConfig{Name: "name", Owner: "owner", Workflow: "OverrideWorkflow"}
+	appconf := AppConfig{Repos: []RepoConfig{repo, repo2}, DefaultWorkflow: "DefaultWorkflow"}
 
 	want := regexp.MustCompile(`\b` + appconf.DefaultWorkflow + `\b`)
 	want2 := regexp.MustCompile(`\b` + repo2.Workflow + `\b`)

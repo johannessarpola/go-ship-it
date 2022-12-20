@@ -18,6 +18,33 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+var githubClient *github.Client
+var appConfig AppConfig
+
+type RepoConfig struct {
+	Name     string `yaml:"name"`
+	Owner    string `yaml:"owner"`
+	Workflow string `yaml:"workflow"`
+}
+
+type AppConfig struct {
+	DefaultWorkflow string       `yaml:"workflow"`
+	Port            string       `yaml:"port"`
+	Host            string       `yaml:"host"`
+	Repos           []RepoConfig `yaml:"repos"`
+}
+
+type Release struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+	Tag  string `json:"tag"`
+}
+
+type Repository struct {
+	Name     string    `json:"name"`
+	Releases []Release `json:"releases"`
+}
+
 func useTokenAuth(token string) *http.Client {
 	ctx := context.Background()
 
@@ -59,20 +86,7 @@ func createClient() (*github.Client, error) {
 
 }
 
-type Repo struct {
-	Name     string `yaml:"name"`
-	Owner    string `yaml:"owner"`
-	Workflow string `yaml:"workflow"`
-}
-
-type AppConfig struct {
-	DefaultWorkflow string `yaml:"workflow"`
-	Port            string `yaml:"port"`
-	Host            string `yaml:"host"`
-	Repos           []Repo `yaml:"repos"`
-}
-
-func resolveWorkflow(repo *Repo, app *AppConfig) string {
+func resolveWorkflow(repo *RepoConfig, app *AppConfig) string {
 	if len(repo.Workflow) == 0 {
 		return app.DefaultWorkflow
 	} else {
@@ -103,17 +117,6 @@ func readConfig() (AppConfig, error) {
 	}
 
 	return appConfig, nil
-}
-
-type Release struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
-	Tag  string `json:"tag"`
-}
-
-type Repository struct {
-	Name     string    `json:"name"`
-	Releases []Release `json:"releases"`
 }
 
 func convertRelease(release *github.RepositoryRelease) Release {
@@ -151,9 +154,6 @@ func getRepositoryReleases(c *gin.Context) {
 	}
 	c.IndentedJSON(http.StatusOK, repositories)
 }
-
-var githubClient *github.Client
-var appConfig AppConfig
 
 func main() {
 
