@@ -17,11 +17,11 @@ func TestResolveWorkflow(t *testing.T) {
 	result2 := resolveWorkflow(&repo2, appconf.DefaultWorkflow)
 
 	if !want.MatchString(result) {
-		t.Fatalf(`Hello("Gladys") = %q, want match for %#q, nil`, result, want)
+		t.Fatalf(`ResolveWorkflow = %q, want match for %#q, nil`, result, want)
 	}
 
 	if !want2.MatchString(result2) {
-		t.Fatalf(`Hello("Gladys") = %q, want match for %#q, nil`, result, want)
+		t.Fatalf(`ResolveWorkflow = %q, want match for %#q, nil`, result, want)
 	}
 
 }
