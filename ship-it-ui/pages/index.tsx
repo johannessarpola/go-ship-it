@@ -1,6 +1,9 @@
 import styles from '../styles/Home.module.css'
 import { useState, useEffect } from 'react'
+import { Text } from '@mantine/core';
+
 import Repositories from '../components/repositories'
+import { Paper } from '@mantine/core'
 
 export default function Home() {
   const [data, setData] = useState([])
@@ -12,7 +15,6 @@ export default function Home() {
     fetch('/api/repositories')
       .then((res) => res.json())
       .then((data) => {
-        console.log(data)
         setData(data)
         setLoading(false)
       })
@@ -22,9 +24,10 @@ export default function Home() {
   if (!data) return <p>No repositories found</p>
 
   return (
-    <>
-      <h1>Hello world! </h1>
+    <Paper shadow="xs" p="md">
+      <Text>Ship releases with this tool</Text>
       <Repositories repos={data}></Repositories>
-    </>
+      
+    </Paper>
   )
 }

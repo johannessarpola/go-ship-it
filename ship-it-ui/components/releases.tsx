@@ -8,12 +8,6 @@ interface Props {
     releases: ReleaseType[]
 }
 
-type Rocket = {
-    name: string
-    owner: string
-    tag: string
-}
-
 async function rocket(repoName: string, repoOwner: string, tag: string) {
     const rocket = {
         name: repoName,
@@ -46,9 +40,11 @@ const Releases = ({ repoOwner, repoName, releases }: Props) => {
                     return (
                         <tr key={idx}>
                             <Release key={idx} {...release}></Release>
-                            <Button onClick={() => rocket(repoName, repoOwner, release.tag)} variant="gradient" gradient={{ from: '#ed6ea0', to: '#ec8c69', deg: 35 }}>
-                                Ship it 🚀
-                            </Button>
+                            <td>
+                                <Button onClick={() => rocket(repoName, repoOwner, release.tag)} variant="gradient" gradient={{ from: '#ed6ea0', to: '#ec8c69', deg: 35 }}>
+                                    Ship it 🚀
+                                </Button>
+                            </td>
                         </tr>
                     )
                 })}

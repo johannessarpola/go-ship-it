@@ -6,7 +6,6 @@ export default async function handler(
   res: NextApiResponse
 ) {
   if(req.method === 'POST') {
-    console.log(req.body)
     const resp = await fetch('http://localhost:8080/ship-it', {
       method: 'POST',
       headers: {
